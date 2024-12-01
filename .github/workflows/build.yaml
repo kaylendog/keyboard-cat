@@ -31,3 +31,5 @@ jobs:
                   tags: |
                       ghcr.io/kaylendog/keyboard-cat:latest
                       ghcr.io/kaylendog/keyboard-cat:${{ github.sha }}
+                  cache-from: type=gha
+                  cache-to: type=gha,mode=max
