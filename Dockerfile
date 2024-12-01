@@ -8,7 +8,7 @@ RUN cargo chef prepare --recipe-path recipe.json
 FROM chef AS builder 
 
 RUN apt-get update && \
-    apt-get install -y build-essential
+    apt-get install -y build-essential cmake
 
 COPY --from=planner /app/recipe.json recipe.json
 
