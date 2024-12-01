@@ -18,7 +18,7 @@ RUN cargo build --release --bin app
 FROM debian:bookworm-slim AS runtime
 
 RUN apt-get update && \
-    apt-get install software-properties-common -y && \
+    apt-get install software-properties-common python3-launchpadlib -y && \
     # install yt-dlp
     add-apt-repository ppa:tomtomtom/yt-dlp && \
     apt-get update && \
