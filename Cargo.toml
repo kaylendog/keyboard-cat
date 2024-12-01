@@ -1,0 +1,23 @@
+[package]
+name = "keyboard-cat"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+humantime = "2.1.0"
+poise = "0.6"
+reqwest = "0.11"    # songbird needs 0.11
+songbird = "0.4"
+# surrealdb = { version = "2.1.2", features = ["kv-mem"] }
+thiserror = "2.0.3"
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+url = "2.5.4"
+
+[dependencies.symphonia]
+version = "0.5.2"
+features = ['pcm', 'mp3', 'wav', 'isomp4', 'aac', 'alac']
+
+[profile.dev.package."*"]
+opt-level = 3
