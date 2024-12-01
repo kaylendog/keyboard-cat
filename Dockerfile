@@ -17,7 +17,10 @@ RUN cargo build --release --bin app
 
 FROM debian:bookworm-slim AS runtime
 
-RUN add-apt-repository ppa:tomtomtom/yt-dlp && \
+RUN apt-get update && \
+    apt-get install software-properties-common -y && \
+    # install yt-dlp
+    add-apt-repository ppa:tomtomtom/yt-dlp && \
     apt-get update && \
     apt-get install -y yt-dlp
 
