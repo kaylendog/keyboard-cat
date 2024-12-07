@@ -32,9 +32,9 @@ WORKDIR /app
 COPY --from=builder /app/target/release/keyboard-cat /keyboard-cat
 ENTRYPOINT ["/keyboard-cat"]
 
-LABEL org.opencontainers.image.title "keyboard-cat"
-LABEL org.opencontainers.image.description "A very dodgy Discord music bot thrown together out of annoyance."
-LABEL org.opencontainers.image.url "https://github.com/kaylendog/keyboard-cat"
-LABEL org.opencontainers.image.source "https://github.com/kaylendog/keyboard-cat"
-LABEL org.opencontainers.image.version "0.1.0"
-LABEL org.opencontainers.image.authors "kaylendog"
+LABEL org.opencontainers.image.title="keyboard-cat"
+LABEL org.opencontainers.image.description="A very dodgy Discord music bot thrown together out of annoyance."
+LABEL org.opencontainers.image.url="https://github.com/kaylendog/keyboard-cat"
+LABEL org.opencontainers.image.source="https://github.com/kaylendog/keyboard-cat"
+LABEL org.opencontainers.image.version="0.1.0"
+LABEL org.opencontainers.image.authors="kaylendog"

@@ -7,17 +7,23 @@ edition = "2021"
 humantime = "2.1.0"
 poise = "0.6"
 reqwest = "0.11"    # songbird needs 0.11
+rusty_ytdl = "0.7"
 songbird = "0.4"
 # surrealdb = { version = "2.1.2", features = ["kv-mem"] }
-thiserror = "2.0.3"
+tempfile = "3"
+thiserror = "2"
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "net"] }
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 url = "2.5.4"
+rspotify = { version = "0.13", features = ["client-reqwest"] }
 
 [dependencies.symphonia]
 version = "0.5.2"
 features = ['pcm', 'mp3', 'wav', 'isomp4', 'aac', 'alac']
+
+[build-dependencies]
+vergen-git2 = { version = "1", features = ["build", "cargo"] }
 
 [profile.dev.package."*"]
 opt-level = 3

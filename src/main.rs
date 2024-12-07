@@ -2,11 +2,13 @@ use std::process;
 
 use poise::{serenity_prelude as serenity, FrameworkError};
 use songbird::SerenityInit;
-use tracing::{error, Level};
+use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
 
 mod commands;
 mod context;
+mod provider;
+mod resolver;
 mod session;
 mod util;
 
@@ -69,10 +71,20 @@ async fn main() {
     tracing_subscriber::fmt()
         .with_env_filter(
             EnvFilter::builder()
-                .with_default_directive(Level::INFO.into())
+                .with_default_directive(
+                    "keyboard_cat=info"
+                        .parse()
+                        .expect("default directive is invalid"),
+                )
                 .from_env_lossy(),
         )
         .init();
+
+    info!(
+        version = env!("CARGO_PKG_VERSION"),
+        sha = env!("VERGEN_GIT_SHA"),
+        build_date = env!("VERGEN_BUILD_DATE")
+    );
 
     // framework config
     let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
