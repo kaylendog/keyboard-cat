@@ -1,4 +1,3 @@
-mod spotify;
 mod youtube;
 
 use songbird::input::Input;

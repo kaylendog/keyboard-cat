@@ -12,7 +12,7 @@ mod resolver;
 mod session;
 mod util;
 
-use commands::{leave, play};
+use commands::{leave, play, queue, search};
 use context::{Error, InstanceContext};
 
 /// Handle errors that occur in the framework.
@@ -93,7 +93,7 @@ async fn main() {
     // initialise framework
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![play(), leave()],
+            commands: vec![play(), leave(), queue(), search()],
             on_error: |err| Box::pin(handle_error(err)),
             ..Default::default()
         })

@@ -52,6 +52,9 @@ pub enum Error {
     /// A URL parsing error occured.
     #[error("URL parsing error: {0}")]
     UrlParseError(#[from] url::ParseError),
+    /// A session manager error occured.
+    #[error("{0}")]
+    SessionManagerError(#[from] crate::session::SessionError),
     /// A custom error occured.
     #[error("{0}")]
     Custom(&'static str),
@@ -60,7 +63,11 @@ pub enum Error {
 impl Error {
     /// Returns true if this error can be shown to the user.
     pub fn is_user_facing(&self) -> bool {
-        matches!(self, Error::PermissionError(_) | Error::Custom(_))
+        match self {
+            Error::SessionManagerError(e) => e.is_user_facing(),
+            Error::PermissionError(_) | Error::Custom(_) => true,
+            _ => false,
+        }
     }
 
     /// Converts this error into a boxed error.
@@ -69,4 +76,5 @@ impl Error {
     }
 }
 
+/// The context type used throughout the bot.
 pub type Context<'a> = poise::Context<'a, InstanceContext, Box<Error>>;

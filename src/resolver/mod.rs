@@ -20,6 +20,7 @@ pub enum Metadata {
     },
 }
 
+/// A resolver that can resolve user searches to metadata.
 pub trait Resolver {
     type Error;
 
@@ -60,6 +61,8 @@ impl Resolver for GlobalResolver {
     }
 }
 
+/// An error that can occur when resolving URLs.
 pub enum GlobalResolverError {
+    /// A YouTube provider error.
     Youtube(rusty_ytdl::VideoError),
 }

@@ -71,13 +71,13 @@ impl SessionManager {
 /// The session is immediately destroyed when there are no users left in the voice channel.
 pub struct Session {
     /// A reference to Songbird's [`Call`], which is used to manage the voice connection.
-    call: Arc<Mutex<songbird::Call>>,
+    pub call: Arc<Mutex<songbird::Call>>,
     /// The voice channel this session is bound to.
-    channel: serenity::GuildChannel,
+    pub channel: serenity::GuildChannel,
     /// A queue of input sources to play.
-    tracks: RwLock<VecDeque<TrackInfo>>,
+    pub tracks: RwLock<VecDeque<TrackInfo>>,
     /// A handle to the currently playing track.
-    playing: Option<TrackHandle>,
+    pub playing: Option<TrackHandle>,
 }
 
 impl Session {
@@ -167,6 +167,15 @@ pub enum SessionError {
     /// An error occurred while performing a Songbird operation.
     #[error("Songbird error: {0}")]
     SongbirdControlError(#[from] songbird::error::ControlError),
+}
+
+impl SessionError {
+    pub fn is_user_facing(&self) -> bool {
+        matches!(
+            self,
+            SessionError::MissingVoiceChannel | SessionError::SessionExists(_)
+        )
+    }
 }
 
 /// A queue entry is a request to play a track from a source URL.
