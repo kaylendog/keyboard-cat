@@ -1,23 +1,14 @@
-use crate::context::{Context, Error};
+use crate::context::{Ctx, Error};
 
 //// Leave the voice channel.
 #[poise::command(slash_command, guild_only)]
-pub async fn leave(ctx: Context<'_>) -> Result<(), Box<Error>> {
-    let manager = songbird::get(ctx.serenity_context()).await.unwrap();
-    let guild_id = ctx.guild_id().unwrap();
-
-    // leave the voice channel
-    let call = manager
-        .get(guild_id)
-        .ok_or(Error::Custom(":x: Not in a voice channel.").boxed())?;
-    call.lock()
+pub async fn leave(ctx: Ctx<'_>) -> Result<(), Box<Error>> {
+    // destroy session
+    ctx.data()
+        .session_manager
+        .destroy(&ctx)
         .await
-        .leave()
-        .await
-        .map_err(|e| Error::SongbirdJoinError(e).boxed())?;
-
-    // remove the track handle
-    ctx.data().track_handles.write().await.remove(&guild_id);
+        .map_err(Error::SessionManagerError)?;
 
     ctx.reply(":white_check_mark: Left voice channel.")
         .await

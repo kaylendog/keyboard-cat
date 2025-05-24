@@ -1,22 +1,72 @@
 use std::process;
 
 use poise::{serenity_prelude as serenity, FrameworkError};
+use rust_i18n::i18n;
 use songbird::SerenityInit;
 use tracing::{error, info};
 use tracing_subscriber::EnvFilter;
 
 mod commands;
 mod context;
-mod provider;
-mod resolver;
 mod session;
 mod util;
 
 use commands::{leave, play, queue, search};
-use context::{Error, InstanceContext};
+use context::{Context, Error};
+
+i18n!("locales", fallback = "en");
+
+#[tokio::main]
+async fn main() {
+    tracing_subscriber::fmt()
+        .with_env_filter(
+            EnvFilter::builder()
+                .with_default_directive(
+                    "keyboard_cat=info"
+                        .parse()
+                        .expect("default directive is invalid"),
+                )
+                .from_env_lossy(),
+        )
+        .init();
+
+    info!(
+        version = env!("CARGO_PKG_VERSION"),
+        sha = env!("VERGEN_GIT_SHA"),
+        build_date = env!("VERGEN_BUILD_DATE")
+    );
+
+    // framework config
+    let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
+    let intents = serenity::GatewayIntents::non_privileged();
+
+    // initialise framework
+    let framework = poise::Framework::builder()
+        .options(poise::FrameworkOptions {
+            commands: vec![play(), leave(), queue(), search()],
+            on_error: |err| Box::pin(handle_error(err)),
+            ..Default::default()
+        })
+        .setup(|ctx, _ready, framework| {
+            Box::pin(async move {
+                poise::builtins::register_globally(ctx, &framework.options().commands)
+                    .await
+                    .map_err(|e| Box::new(Error::SerenityError(e)))?;
+                Ok(Context::init().await?)
+            })
+        })
+        .build();
+
+    let client = serenity::ClientBuilder::new(token, intents)
+        .framework(framework)
+        .register_songbird()
+        .await;
+
+    client.unwrap().start().await.unwrap();
+}
 
 /// Handle errors that occur in the framework.
-async fn handle_error(err: FrameworkError<'_, InstanceContext, Box<Error>>) {
+async fn handle_error(err: FrameworkError<'_, Context, Box<Error>>) {
     match err {
         // the user's fault
         FrameworkError::ArgumentParse { ctx, .. } => {
@@ -64,53 +114,4 @@ async fn handle_error(err: FrameworkError<'_, InstanceContext, Box<Error>>) {
             error!(%err, "Unhandled framework error");
         }
     }
-}
-
-#[tokio::main]
-async fn main() {
-    tracing_subscriber::fmt()
-        .with_env_filter(
-            EnvFilter::builder()
-                .with_default_directive(
-                    "keyboard_cat=info"
-                        .parse()
-                        .expect("default directive is invalid"),
-                )
-                .from_env_lossy(),
-        )
-        .init();
-
-    info!(
-        version = env!("CARGO_PKG_VERSION"),
-        sha = env!("VERGEN_GIT_SHA"),
-        build_date = env!("VERGEN_BUILD_DATE")
-    );
-
-    // framework config
-    let token = std::env::var("DISCORD_TOKEN").expect("missing DISCORD_TOKEN");
-    let intents = serenity::GatewayIntents::non_privileged();
-
-    // initialise framework
-    let framework = poise::Framework::builder()
-        .options(poise::FrameworkOptions {
-            commands: vec![play(), leave(), queue(), search()],
-            on_error: |err| Box::pin(handle_error(err)),
-            ..Default::default()
-        })
-        .setup(|ctx, _ready, framework| {
-            Box::pin(async move {
-                poise::builtins::register_globally(ctx, &framework.options().commands)
-                    .await
-                    .map_err(|e| Box::new(Error::SerenityError(e)))?;
-                Ok(InstanceContext::init().await?)
-            })
-        })
-        .build();
-
-    let client = serenity::ClientBuilder::new(token, intents)
-        .framework(framework)
-        .register_songbird()
-        .await;
-
-    client.unwrap().start().await.unwrap();
 }

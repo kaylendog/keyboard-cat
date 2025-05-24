@@ -1,19 +1,15 @@
 use poise::serenity_prelude as serenity;
 
-use crate::context::{Context, Error};
+use crate::context::{Ctx, Error};
 
 /// Search for a song.
 #[poise::command(slash_command, guild_only)]
-pub async fn queue(
-    ctx: Context<'_>,
-    #[description = "Youtube URL or query"] input: String,
-    #[description = "Voice channel to join"] channel: Option<serenity::ChannelId>,
-) -> Result<(), Box<Error>> {
+pub async fn queue(ctx: Ctx<'_>) -> Result<(), Box<Error>> {
     // get the session
     let session = ctx
         .data()
         .session_manager
-        .create(&ctx, channel)
+        .get_or_create(&ctx, None)
         .await
         .map_err(Error::SessionManagerError)?;
 

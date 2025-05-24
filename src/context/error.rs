@@ -1,36 +1,4 @@
-//! The context module contains the context struct and error type used throughout the bot.
-
-use std::collections::HashMap;
-
 use poise::serenity_prelude as serenity;
-use reqwest::Client as HttpClient;
-use songbird::tracks::TrackHandle;
-// use surrealdb::{
-//     engine::local::{Db, Mem},
-//     Surreal,
-// };
-use tokio::sync::RwLock;
-
-use crate::session::SessionManager;
-
-pub struct InstanceContext {
-    // pub db: RwLock<Surreal<Db>>,
-    pub http: HttpClient,
-    pub track_handles: RwLock<HashMap<serenity::GuildId, TrackHandle>>,
-    pub session_manager: SessionManager,
-}
-
-impl InstanceContext {
-    pub async fn init() -> Result<Self, Box<Error>> {
-        // let db = Surreal::new::<Mem>(()).await.map_err(Error::SurrealError)?;
-        Ok(Self {
-            // db: db.into(),
-            http: HttpClient::default(),
-            track_handles: Default::default(),
-            session_manager: SessionManager::default(),
-        })
-    }
-}
 
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
@@ -75,6 +43,3 @@ impl Error {
         Box::new(self)
     }
 }
-
-/// The context type used throughout the bot.
-pub type Context<'a> = poise::Context<'a, InstanceContext, Box<Error>>;

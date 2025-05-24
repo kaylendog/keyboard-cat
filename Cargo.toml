@@ -17,6 +17,7 @@ tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
 url = "2.5.4"
 rspotify = { version = "0.13", features = ["client-reqwest"] }
+rust-i18n = "3.1.5"
 
 [dependencies.symphonia]
 version = "0.5.2"

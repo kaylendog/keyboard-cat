@@ -7,7 +7,7 @@ use poise::serenity_prelude as serenity;
 use songbird::tracks::TrackHandle;
 use tokio::sync::{Mutex, RwLock};
 
-use crate::context::Context;
+use crate::context::Ctx;
 
 /// A manager for all active listening sessions.
 #[derive(Default)]
@@ -17,52 +17,58 @@ pub struct SessionManager {
 }
 
 impl SessionManager {
-    /// Creates a new session, failing if one already exists for the guild.
-    pub async fn create(
-        &self,
-        ctx: &Context<'_>,
-        channel: Option<serenity::ChannelId>,
-    ) -> Result<Arc<Session>, SessionError> {
-        let exists = self
-            .sessions
+    /// Fetches the session for the current guild, if it exists.
+    pub async fn get(&self, ctx: &Ctx<'_>) -> Option<Arc<Session>> {
+        self.sessions
             .read()
             .await
-            .contains_key(&ctx.guild_id().unwrap());
-
-        if exists {
-            // get the channel ID of the existing session
-            let id = self.sessions.read().await[&ctx.guild_id().unwrap()]
-                .channel
-                .id;
-            return Err(SessionError::SessionExists(id));
-        }
-
-        let session = Arc::new(Session::create(ctx, channel).await?);
-        self.sessions
-            .write()
-            .await
-            .insert(ctx.guild_id().unwrap(), session.clone());
-
-        Ok(session)
+            .get(&ctx.guild_id().unwrap())
+            .cloned()
     }
 
-    /// Plays a track in the session for the given guild, appending it to the queue.
-    pub async fn play(
+    /// Gets the session for the current guild, or creates a new one if it doesn't exist.
+    pub async fn get_or_create(
         &self,
-        guild_id: serenity::GuildId,
-        source: String,
-        requester: serenity::UserId,
-    ) {
-        if let Some(session) = self.sessions.read().await.get(&guild_id) {
-            session.append(source, requester).await;
+        ctx: &Ctx<'_>,
+        channel: Option<serenity::ChannelId>,
+    ) -> Result<Arc<Session>, SessionError> {
+        if let Some(session) = self.get(ctx).await {
+            return Ok(session);
         }
+
+        // get user voice channel
+        let channel = channel.map(|c| Ok(c)).unwrap_or_else(|| {
+            match ctx
+                .guild()
+                .unwrap()
+                .voice_states
+                .get(&ctx.author().id)
+                .and_then(|voice_state| voice_state.channel_id)
+            {
+                Some(channel) => Ok(channel),
+                None => Err(SessionError::MissingVoiceChannel),
+            }
+        })?;
+
+        // convert to guild channel
+        let channel = channel
+            .to_channel(ctx.serenity_context())
+            .await
+            .map_err(|e| SessionError::SerenityError(e))?
+            .guild()
+            .ok_or(SessionError::MissingVoiceChannel)?;
+
+        Session::create(ctx, channel)
+            .await
+            .map(|session| Arc::new(session))
     }
 
-    /// Destroys the session for the given guild, if it exists.
-    pub async fn destroy(&self, guild_id: serenity::GuildId) {
-        if let Some(session) = self.sessions.write().await.remove(&guild_id) {
+    /// Destroys the session for the current guild, if it exists.
+    pub async fn destroy(&self, ctx: &Ctx<'_>) -> Result<(), SessionError> {
+        if let Some(session) = { self.sessions.write().await.remove(&ctx.guild_id().unwrap()) } {
             session.destroy().await;
         }
+        Ok(())
     }
 }
 
@@ -83,25 +89,9 @@ pub struct Session {
 impl Session {
     /// Creates a new session with the given voice channel, or uses the author's voice channel if none is provided.
     pub async fn create(
-        ctx: &Context<'_>,
-        channel: Option<serenity::ChannelId>,
+        ctx: &Ctx<'_>,
+        channel: serenity::GuildChannel,
     ) -> Result<Self, SessionError> {
-        // big ass monad fun
-        let channel = channel
-            .or_else(|| {
-                ctx.guild()
-                    .unwrap()
-                    .voice_states
-                    .get(&ctx.author().id)
-                    .and_then(|voice_state| voice_state.channel_id)
-            })
-            .ok_or(SessionError::MissingVoiceChannel)?
-            .to_channel(ctx.serenity_context())
-            .await
-            .map_err(|e| SessionError::SerenityError(e))?
-            .guild()
-            .ok_or(SessionError::MissingVoiceChannel)?;
-
         // instantiate call
         let manager = songbird::get(ctx.serenity_context()).await.unwrap();
         let call = manager
